@@ -18,25 +18,17 @@ net.show("basic.html")
 
 
 '''
-import re
-l = {}
+s = set()
 
-l["hi"] = [10]
-l["pik"] = [90]
-l["hi"].append(1000)
-print(len(l))
+s.add(50)
+s.add(1)
 
+s.add(22)
+s.add(1000)
 
-print(l["hi"])
-
+s.add(0)
 
 
-for k,v in l.items():
-    print("k: " + str(k) + " v: " + str(v))
+w= sorted(s)
 
-
-print("_______________________________-")
-
-
-for k in l:
-    print("k: " + str(k))
+print(w)

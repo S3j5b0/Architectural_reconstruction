@@ -3,6 +3,7 @@ from radon.visitors import ComplexityVisitor
 import re
 import os
 from pyvis.network import Network
+from pydriller import RepositoryMining
 
 
 class Vert:
@@ -16,7 +17,7 @@ class Vert:
         
 from pathlib import Path
 
-rootDir = "/home/ask/Git/tweeda/"
+rootDir = "/home/ask/Git/Zeeguu-API/"
 directories = set()
 # this is horrible
 for file in Path(rootDir).rglob("*.py"):
@@ -69,6 +70,14 @@ def importsAndClassAndgetParent(file):
                 continue  
   
     return all_imports, classes, ParentDir
+    
+churn_per_file = {}
+for commit in RepositoryMining("/home/ask/Git/Zeeguu-API").traverse_commits():
+    for modified_file in commit.modifications:
+        churn = modified_file.removed + modified_file.added
+        if modified_file.new_path not in churn_per_file: # Here you should keep track of renaming, add a new "if-else"
+            churn_per_file[modified_file.new_path] = 0
+        churn_per_file[modified_file.new_path] = churn_per_file[modified_file.new_path] + churn
 
 
 net = Network(directed=True, height="1500px", width="100%")
@@ -78,6 +87,7 @@ idsInDirectory = {} #(directory, set(id))
 importedNodes = set() # I use this to keep track of files that have been imported somewhere
 nodeNames = set()
 counter = 0
+
 for file in Path(rootDir).rglob("*.py"):
     # Opening file, and looking at contents
     f = open(file, "r")
@@ -104,12 +114,15 @@ for file in Path(rootDir).rglob("*.py"):
     nodes[v.name] = v
     counter = counter + 1 
     
+
     if ParentDirectory in idsInDirectory and ParentDirectory != "":
         idsInDirectory[ParentDirectory].append(counter)
     else:
         idsInDirectory[ParentDirectory] = [counter]
+    colorval = (255 - (50 + churn_per_file[v.name]  * 2)) % 255
+    print()
 
-    net.add_node(v.id, label=v.name, size=v.size*2, scaling={"label": {"min": 100000, "max": 200000}})
+    net.add_node(v.id, label=v.name, size=v.size*2, scaling={"label": {"min": 100000, "max": 200000}}, color='#%02x%02x%02x' % (colorval, colorval, colorval))
 
 
 dirNodes = {} # (id, label)
