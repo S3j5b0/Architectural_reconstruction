@@ -3,9 +3,10 @@ from radon.visitors import ComplexityVisitor
 import re
 import os
 from pyvis.network import Network
-from pydriller import RepositoryMining
 
-
+from datetime import datetime
+#rootDir = sys.argv[0]
+        
 class Vert:
     def __init__(self, name, id, size ,edges,importedDirs,directory):
         self.name = name
@@ -16,8 +17,8 @@ class Vert:
         self.parentDir = directories
         
 from pathlib import Path
-
-rootDir = "/home/ask/Git/Zeeguu-API/"
+#/home/ask/Git/tweeda /home/ask/Git/Zeeguu-API/" /home/ask/Git/flaskex
+rootDir = "/home/ask/Git/flaskex"
 directories = set()
 # this is horrible
 for file in Path(rootDir).rglob("*.py"):
@@ -30,8 +31,7 @@ for file in Path(rootDir).rglob("*.py"):
         print("error in making dir ")
         quit()    
 
-#    print(str(file).replace(rootDir, ""))
- #   localDirs = str(file).split('/')
+
 
 def extract_importandClass_from_line(unline):
 
@@ -72,13 +72,17 @@ def importsAndClassAndgetParent(file):
     return all_imports, classes, ParentDir
     
 churn_per_file = {}
-for commit in RepositoryMining("/home/ask/Git/Zeeguu-API").traverse_commits():
-    for modified_file in commit.modifications:
-        churn = modified_file.removed + modified_file.added
-        if modified_file.new_path not in churn_per_file: # Here you should keep track of renaming, add a new "if-else"
-            churn_per_file[modified_file.new_path] = 0
-        churn_per_file[modified_file.new_path] = churn_per_file[modified_file.new_path] + churn
+from pydriller.metrics.process.code_churn import CodeChurn
 
+metric = CodeChurn(path_to_repo =rootDir, 
+                   since=datetime(2008, 1, 1), 
+                   to=datetime.now(), 
+                   ignore_added_files=True)
+
+churn_per_file = metric.count()
+
+for k,v in churn_per_file.items():
+    print("k: " + str(k) + " v: "  + str(v))
 
 net = Network(directed=True, height="1500px", width="100%")
 nodes = {}
@@ -119,8 +123,10 @@ for file in Path(rootDir).rglob("*.py"):
         idsInDirectory[ParentDirectory].append(counter)
     else:
         idsInDirectory[ParentDirectory] = [counter]
-    colorval = (255 - (50 + churn_per_file[v.name]  * 2)) % 255
-    print()
+    try:     
+        colorval = (255 - (50 + churn_per_file[v.name]  * 2)) % 255
+    except:
+        colorval = 255
 
     net.add_node(v.id, label=v.name, size=v.size*2, scaling={"label": {"min": 100000, "max": 200000}}, color='#%02x%02x%02x' % (colorval, colorval, colorval))
 
@@ -138,7 +144,7 @@ for k, v in nodes.items():
             if str(i) in directories and str(i) not in importedDirs and v.name.replace(".py", "") not in importedNodes:
                 counter = counter + 1 
 
-                net.add_node(counter, label=str(i),size=15, shape="box", color="#eff542")
+                net.add_node(counter, label=str(i),size=20, shape="box", color="#eff542")
                 net.add_edge(v.id, counter,color="#ec320a")
                 importedDirs.add(str(i))
 
@@ -146,11 +152,12 @@ for k, v in nodes.items():
                     net.add_edge(counter, b,color="#eff542")
 
             else:
-                print("could not add edge to:" + str(i))    
+                continue
+              #  print("could not add edge to:" + str(i))    
         
 net.barnes_hut(overlap=1)
 #net.force_atlas_2based(overlap= 1)
-net.show("network.html")
+net.show("simpleGraph.html")
 
 
 
