@@ -1,0 +1,5 @@
+- give churn to second model.
+
+- try ajdusting zoom for nodes // doesnt work
+
+- måske rette på det der med at det kun er init der bliver imported nogle gange 

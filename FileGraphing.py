@@ -81,8 +81,7 @@ metric = CodeChurn(path_to_repo =rootDir,
 
 churn_per_file = metric.count()
 
-for k,v in churn_per_file.items():
-    print("k: " + str(k) + " v: "  + str(v))
+
 
 net = Network(directed=True, height="1500px", width="100%")
 nodes = {}
